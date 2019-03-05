@@ -1,11 +1,12 @@
 import React, { Component } from "react";
-import SimpleStorageContract from "./contracts/SimpleStorage.json";
+import SimpleStorage from "./build/contracts/SimpleStorage.json";
 import getWeb3 from "./utils/getWeb3";
+import ipfs from './ipfs'
 
 import "./App.css";
 
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null };
+  state = { web3: null, accounts: null, contract: null, buffer: null, ipfsHash: ''};
 
   componentDidMount = async () => {
     try {
@@ -17,11 +18,15 @@ class App extends Component {
 
       // Get the contract instance.
       const networkId = await web3.eth.net.getId();
-      const deployedNetwork = SimpleStorageContract.networks[networkId];
+
+      const deployedNetwork = SimpleStorage.networks[networkId];
+
       const instance = new web3.eth.Contract(
-        SimpleStorageContract.abi,
+          SimpleStorage.abi,
         deployedNetwork && deployedNetwork.address,
       );
+
+      console.log('instance', instance);
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -36,17 +41,42 @@ class App extends Component {
   };
 
   runExample = async () => {
+
     const { accounts, contract } = this.state;
 
-    // Stores a given value, 5 by default.
-    await contract.methods.set(5).send({ from: accounts[0] });
-
     // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call();
+    const response = await contract.methods.get().call()
+    console.log('response', response)
+    this.setState({ipfsHash: response})
 
-    // Update state with the result.
-    this.setState({ storageValue: response });
   };
+
+  captureFile(event){
+      event.preventDefault()
+      const file = event.target.files[0]
+      const reader = new window.FileReader()
+      reader.readAsArrayBuffer(file)
+      reader.onloadend = () => {
+          this.setState({buffer: Buffer(reader.result)})
+          console.log('buffer', this.state.buffer);
+      }
+  }
+
+  async onSubmit (event){
+      const { accounts, contract } = this.state;
+      event.preventDefault();
+      await ipfs.files.add(this.state.buffer,(error, result)=>{
+          if(error){
+              console.log(error)
+              return
+          }
+          console.log('result', result)
+          this.setState({ipfsHash: result[0].hash})
+          contract.methods.set(result[0].hash).send({ from: accounts[0] })
+          console.log('ipfsHash', this.state.ipfsHash);
+      });
+
+  }
 
   render() {
     if (!this.state.web3) {
@@ -54,20 +84,20 @@ class App extends Component {
     }
     return (
       <div className="App">
-        <h1>Good to Go!</h1>
-        <p>Your Truffle Box is installed and ready.</p>
-        <h2>Smart Contract Example</h2>
-        <p>
-          If your contracts compiled and migrated successfully, below will show
-          a stored value of 5 (by default).
-        </p>
-        <p>
-          Try changing the value stored on <strong>line 40</strong> of App.js.
-        </p>
-        <div>The stored value is: {this.state.storageValue}</div>
+        <h1>Ipfs Image Uploader</h1>
+        <h2>Your Image</h2>
+        <p>This image is retrieved from IPFS</p>
+        <img src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} alt=""/>
+        <h2>Upload Image</h2>
+        <form onSubmit={this.onSubmit}>
+            <input type="file" onChange={this.captureFile.bind(this)}/>
+            <input type="submit" onClick={this.onSubmit.bind(this)}/>
+        </form>
       </div>
     );
   }
+
+
 }
 
 export default App;
