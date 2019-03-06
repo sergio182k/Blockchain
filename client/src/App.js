@@ -87,7 +87,7 @@ class App extends Component {
         <h1>Ipfs Image Uploader</h1>
         <h2>Your Image</h2>
         <p>This image is retrieved from IPFS</p>
-        <img src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} alt=""/>
+        <iframe src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} width="800px" height="2100px"></iframe>
         <h2>Upload Image</h2>
         <form onSubmit={this.onSubmit}>
             <input type="file" onChange={this.captureFile.bind(this)}/>
