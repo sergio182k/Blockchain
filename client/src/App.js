@@ -84,11 +84,11 @@ class App extends Component {
     }
     return (
       <div className="App">
-        <h1>Ipfs Image Uploader</h1>
-        <h2>Your Image</h2>
-        <p>This image is retrieved from IPFS</p>
-        <iframe src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} width="800px" height="2100px"></iframe>
-        <h2>Upload Image</h2>
+        <h1>Tcs Digital Actives</h1>
+        <h2>Your Digital Active</h2>
+        <p>This active is retrieved from the BlockChain and IPFS</p>
+        <iframe src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} width="800px" height="500px"></iframe>
+        <h2>Upload PDF file</h2>
         <form onSubmit={this.onSubmit}>
             <input type="file" onChange={this.captureFile.bind(this)}/>
             <input type="submit" onClick={this.onSubmit.bind(this)}/>
