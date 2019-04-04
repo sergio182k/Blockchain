@@ -42,17 +42,25 @@ class App extends Component {
 
   runExample = async () => {
 
-    const { accounts, contract } = this.state;
+    const { contract } = this.state;
 
     // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call()
+    document.getElementsByName("capture")[0].placeholder='new text for email';
+    var x = document.getElementById("resultPage");
+    x.style.display = "none";
+    var notFoundP = document.getElementById("notFoundPage");
+    notFoundP.style.display = "none";
+    const response = await contract.methods.get(333).call();
+    if(response === ""){
+        console.log('mostrar');
+    }
     console.log('response', response)
     this.setState({ipfsHash: response})
 
   };
 
   captureFile(event){
-      event.preventDefault()
+      event.preventDefault();
       const file = event.target.files[0]
       const reader = new window.FileReader()
       reader.readAsArrayBuffer(file)
@@ -62,7 +70,19 @@ class App extends Component {
       }
   }
 
+  goBack(event){
+      var page1 = document.getElementById("pag1");
+      page1.style.display = 'block';
+      var notFoundP = document.getElementById("notFoundPage");
+      notFoundP.style.display = "none";
+      var x = document.getElementById("resultPage");
+      x.style.display = "none";
+      document.getElementById("personalIdSearch").value = "";
+  }
+
   async onSubmit (event){
+      var personalIdA = document.getElementById("personalId").value;
+      console.log(personalIdA);
       const { accounts, contract } = this.state;
       event.preventDefault();
       await ipfs.files.add(this.state.buffer,(error, result)=>{
@@ -72,10 +92,38 @@ class App extends Component {
           }
           console.log('result', result)
           this.setState({ipfsHash: result[0].hash})
-          contract.methods.set(result[0].hash).send({ from: accounts[0] })
+          contract.methods.set(result[0].hash, personalIdA).send({ from: accounts[0] });
           console.log('ipfsHash', this.state.ipfsHash);
-      });
 
+          var page1 = document.getElementById("pag1");
+          page1.style.display = 'none';
+          var notFoundP = document.getElementById("notFoundPage");
+          notFoundP.style.display = "none";
+          var x = document.getElementById("resultPage");
+          x.style.display = "block";
+          document.getElementById("personalId").value = "";
+
+      });
+  }
+
+  async onSearch(event){
+      var page1 = document.getElementById("pag1");
+      page1.style.display = 'none';
+      var x = document.getElementById("resultPage");
+      const { contract } = this.state;
+      console.log('onSearch');
+      var personalIdSearchI = document.getElementById("personalIdSearch").value;
+      console.log(personalIdSearchI);
+      const response = await contract.methods.get(personalIdSearchI).call();
+      if(response !== ""){
+          x.style.display = "block";
+      }else{
+          x.style.display = "none";
+          var notFoundP = document.getElementById("notFoundPage");
+          notFoundP.style.display = "block";
+      }
+      console.log('response', response)
+      this.setState({ipfsHash: response})
   }
 
   render() {
@@ -84,20 +132,46 @@ class App extends Component {
     }
     return (
       <div className="App">
-        <h1>Tcs Digital Actives</h1>
-        <h2>Your Digital Active</h2>
-        <p>This active is retrieved from the BlockChain and IPFS</p>
-        <iframe src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} width="800px" height="500px"></iframe>
-        <h2>Upload PDF file</h2>
-        <form onSubmit={this.onSubmit}>
-            <input type="file" onChange={this.captureFile.bind(this)}/>
-            <input type="submit" onClick={this.onSubmit.bind(this)}/>
-        </form>
+        <h1>Tcs Activos Digitales</h1>
+        <br/>
+        <br/>
+        <div id="pag1">
+            <div id="add">
+                <h3>Agrega tu documento</h3>
+                <input name="capture" type="file" onChange={this.captureFile.bind(this)}/>
+                <h3>Id asociado</h3>
+                <input type="text" id="personalId"/>
+                <form onSubmit={this.onSubmit}>
+                    <br/>
+                    <button type="button"onClick={this.onSubmit.bind(this)} >Guardar</button>
+                </form>
+            </div>
+            <br/>
+            <hr width="50%"/>
+            <div id="search">
+                <h3>Busca tu documento</h3>
+                <h3>Id asociado</h3>
+                <input type="text" id="personalIdSearch"/>
+                <form onSubmit={this.onSubmit}>
+                    <br/>
+                    <button type="button"onClick={this.onSearch.bind(this)}>Buscar</button>
+                </form>
+            </div>
+        </div>
+        <div id="pag2">
+            <div id="resultPage">
+                <p>Tu docuemnto es:</p>
+                <iframe src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} width="800px" height="500px"></iframe>
+                <button type="button"onClick={this.goBack.bind(this)}>Volver</button>
+            </div>
+            <div id="notFoundPage">
+                <h3>No hay documentos Asociados</h3>
+                <button type="button"onClick={this.goBack.bind(this)}>Volver</button>
+            </div>
+        </div>
       </div>
     );
   }
-
-
 }
 
 export default App;
