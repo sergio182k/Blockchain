@@ -85,7 +85,7 @@ class App extends Component {
       console.log(personalIdA);
       const { accounts, contract } = this.state;
       event.preventDefault();
-      await ipfs.files.add(this.state.buffer,(error, result)=>{
+      await ipfs.add(this.state.buffer,(error, result)=>{
           if(error){
               console.log(error)
               return
@@ -160,13 +160,17 @@ class App extends Component {
         </div>
         <div id="pag2">
             <div id="resultPage">
-                <p>Tu docuemnto es:</p>
-                <iframe src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} width="800px" height="500px"></iframe>
+                <div>
+                    <p>Tu docuemnto es:</p>
+                    <iframe src={`https://ipfs.io/ipfs/${this.state.ipfsHash}`} width="800px" height="500px"></iframe>
+                </div>
                 <button type="button"onClick={this.goBack.bind(this)}>Volver</button>
             </div>
             <div id="notFoundPage">
                 <h3>No hay documentos Asociados</h3>
-                <button type="button"onClick={this.goBack.bind(this)}>Volver</button>
+                <div>
+                    <button type="button"onClick={this.goBack.bind(this)}>Volver</button>
+                </div>
             </div>
         </div>
       </div>
