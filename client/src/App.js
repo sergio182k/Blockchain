@@ -12,22 +12,16 @@ class App extends Component {
     try {
       // Get network provider and web3 instance.
       const web3 = await getWeb3();
-
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
-
       // Get the contract instance.
       const networkId = await web3.eth.net.getId();
-
       const deployedNetwork = SimpleStorage.networks[networkId];
-
       const instance = new web3.eth.Contract(
           SimpleStorage.abi,
         deployedNetwork && deployedNetwork.address,
       );
-
       console.log('instance', instance);
-
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
       this.setState({ web3, accounts, contract: instance }, this.runExample);
@@ -40,24 +34,46 @@ class App extends Component {
     }
   };
 
+
   runExample = async () => {
-
-    const { contract } = this.state;
-
-    // Get the value from the contract to prove it worked.
-    document.getElementsByName("capture")[0].placeholder='new text for email';
-    var x = document.getElementById("resultPage");
-    x.style.display = "none";
-    var notFoundP = document.getElementById("notFoundPage");
-    notFoundP.style.display = "none";
-    const response = await contract.methods.get(333).call();
-    if(response === ""){
-        console.log('mostrar');
-    }
-    console.log('response', response)
-    this.setState({ipfsHash: response})
-
+      const { contract } = this.state;
+      var page1 = document.getElementById("pag1");
+      page1.style.display = "none";
+      var page2 = document.getElementById("pag2");
+      page2.style.display = "none";
+      var PNoRegistradoP = document.getElementById("PNoRegistrado");
+      PNoRegistradoP.style.display = "none";
   };
+
+  async login(event){
+      const { web3, contract } = this.state;
+      console.log('w3', web3);
+      var docPersonaI = document.getElementById("docPersona").value;
+      const response = await contract.methods.login(docPersonaI).call();
+      if(response[0] !== "1"){
+          console.log("login Successful");
+          console.log(response);
+          var numberOfDocs = Object.keys(response[2]).length;
+          var hashDocs = [];
+          for (var i = 0; i < numberOfDocs; i++){
+              var hashDoc = web3.utils.toAscii(response[3][i]) + web3.utils.toAscii(response[4][i]);
+              hashDocs.push(hashDoc);
+          }
+          console.log(hashDocs);
+          var name = web3.utils.toAscii(response[1]);
+          console.log(name);
+          var PNoRegistradoP = document.getElementById("PNoRegistrado");
+          PNoRegistradoP.style.display = "none";
+          var page0 = document.getElementById("pag0");
+          page0.style.display = "none";
+          var page1 = document.getElementById("pag1");
+          page1.style.display = "block";
+      }else{
+          var PNoRegistradoP = document.getElementById("PNoRegistrado");
+          PNoRegistradoP.style.display = "block";
+          document.getElementById("docPersona").value = "";
+      }
+  }
 
   captureFile(event){
       event.preventDefault();
@@ -67,6 +83,7 @@ class App extends Component {
       reader.onloadend = () => {
           this.setState({buffer: Buffer(reader.result)})
           console.log('buffer', this.state.buffer);
+
       }
   }
 
@@ -75,8 +92,8 @@ class App extends Component {
       page1.style.display = 'block';
       var notFoundP = document.getElementById("notFoundPage");
       notFoundP.style.display = "none";
-      var x = document.getElementById("resultPage");
-      x.style.display = "none";
+      var resultPageP = document.getElementById("resultPage");
+      resultPageP.style.display = "none";
       document.getElementById("personalIdSearch").value = "";
   }
 
@@ -94,31 +111,29 @@ class App extends Component {
           this.setState({ipfsHash: result[0].hash})
           contract.methods.set(result[0].hash, personalIdA).send({ from: accounts[0] });
           console.log('ipfsHash', this.state.ipfsHash);
-
           var page1 = document.getElementById("pag1");
           page1.style.display = 'none';
           var notFoundP = document.getElementById("notFoundPage");
           notFoundP.style.display = "none";
-          var x = document.getElementById("resultPage");
-          x.style.display = "block";
+          var resultPageP = document.getElementById("resultPage");
+          resultPageP.style.display = "block";
           document.getElementById("personalId").value = "";
-
       });
   }
 
   async onSearch(event){
       var page1 = document.getElementById("pag1");
       page1.style.display = 'none';
-      var x = document.getElementById("resultPage");
+      var resultPageP = document.getElementById("resultPage");
       const { contract } = this.state;
       console.log('onSearch');
       var personalIdSearchI = document.getElementById("personalIdSearch").value;
       console.log(personalIdSearchI);
       const response = await contract.methods.get(personalIdSearchI).call();
       if(response !== ""){
-          x.style.display = "block";
+          resultPageP.style.display = "block";
       }else{
-          x.style.display = "none";
+          resultPageP.style.display = "none";
           var notFoundP = document.getElementById("notFoundPage");
           notFoundP.style.display = "block";
       }
@@ -132,9 +147,31 @@ class App extends Component {
     }
     return (
       <div className="App">
+          <br/>
+          <br/>
+          <br/>
         <h1>Tcs Activos Digitales</h1>
         <br/>
         <br/>
+        <div id="pag0">
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <div id="PLogin">
+                <h2>Digita tu documento</h2>
+                <input type="text" id="docPersona"/>
+                <form onSubmit={this.onSubmit}>
+                    <br/>
+                    <button type="button"onClick={this.login.bind(this)}>Ingresar</button>
+                </form>
+            </div>
+            <div id="PNoRegistrado">
+                <br/>
+                <h3>No te encuentras registrado</h3>
+            </div>
+        </div>
         <div id="pag1">
             <div id="add">
                 <h3>Agrega tu documento</h3>
@@ -143,7 +180,7 @@ class App extends Component {
                 <input type="text" id="personalId"/>
                 <form onSubmit={this.onSubmit}>
                     <br/>
-                    <button type="button"onClick={this.onSubmit.bind(this)} >Guardar</button>
+                    <button type="button"onClick={this.onSubmit.bind(this)}>Guardar</button>
                 </form>
             </div>
             <br/>
